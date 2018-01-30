@@ -3,8 +3,11 @@
 #define float3 vec3
 #define float2 vec2
 
-#define PI  (3.141592654f)
-#define TAU (6.283185307f)
+#define PI   3.141592653589793f
+#define IPI  0.318309886183791f
+#define IPI2 0.159154943091895f
+#define TAU  6.283185307179586f
+#define ITAU 0.159154943091895f
 
 uniform vec3 u_eye3d;
 uniform vec3 u_centre3d;
@@ -58,4 +61,39 @@ void Union ( inout float2 t, float d, in float ID ) {
 
 void opRotate(inout float2 p, in float a ) {
   p = cos(a)*p + sin(a)*vec2(p.y, -p.x);
+}
+
+// -- random --
+float Sample_Uniform ( float f ) {
+  vec2 p = vec2(f, fract(sin(f*23423.234)));
+  vec3 p3 = fract(vec3(p.xyx) * 0.1031f);
+  p3 += dot(p3, p3.yzx + 19.19f);
+  return fract((p3.x + p3.y) * p3.z);
+}
+
+float2 Sample_Uniform2 ( float f ) {
+  return float2(Sample_Uniform(f),
+                Sample_Uniform(Sample_Uniform(f)*23.12310f));
+}
+
+// -- sampler --
+float3 To_Cartesian ( float cos_theta, float phi ) {
+  float sin_theta = sqrt(max(0.0f, 1.0f - cos_theta));
+  return float3(cos(phi)*sin_theta, sin(phi)*sin_theta, cos_theta);
+}
+
+vec3 Reorient_Hemisphere ( vec3 wo, vec3 N ) {
+  vec3 binormal = (abs(N.x) < 1.0 ? vec3(1.0, 0.0, 0.0) :
+                   vec3(0.0, 1.0, 0.0));
+  binormal = normalize(cross(N, binormal));
+  vec3 bitangent = cross(binormal, N);
+  return bitangent*wo.x + binormal*wo.y + wo.z*N;
+}
+
+vec3 Sample_Cos_Hemisphere ( float r, float3 N, out float pdf ) {
+  vec2 u = Sample_Uniform2(r);
+  float cos_theta = sqrt(u.y);
+  pdf = cos_theta * IPI;
+  return Reorient_Hemisphere(normalize(To_Cartesian(cos_theta, TAU*u.x)),
+                             N);
 }
