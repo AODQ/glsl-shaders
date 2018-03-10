@@ -82,11 +82,16 @@ float3 To_Cartesian ( float cos_theta, float phi ) {
   return float3(cos(phi)*sin_theta, sin(phi)*sin_theta, cos_theta);
 }
 
+void Calculate_XY ( in float3 N, in float3 X, in float3 Y ) {
+  X = (abs(N.x) < 1.0 ? vec3(1.0, 0.0, 0.0) :
+                        vec3(0.0, 1.0, 0.0));
+  X = normalize(cross(N, binormal));
+  Y = cross(binormal, N);
+}
+
 vec3 Reorient_Hemisphere ( vec3 wo, vec3 N ) {
-  vec3 binormal = (abs(N.x) < 1.0 ? vec3(1.0, 0.0, 0.0) :
-                   vec3(0.0, 1.0, 0.0));
-  binormal = normalize(cross(N, binormal));
-  vec3 bitangent = cross(binormal, N);
+  float3 binormal, bitangent;
+  Calculate_XY(N, binormal, bitangent);
   return bitangent*wo.x + binormal*wo.y + wo.z*N;
 }
 
