@@ -2,6 +2,8 @@
 
 #include "util.frag"
 
+uniform sampler2D u_backbuffer;
+
 // Returns <dist, material>
 float2 Map ( in vec3 o ) {
   float2 res = float2(999.0f);
@@ -85,5 +87,12 @@ void mainImage ( out float4 fragColor, in float2 fragCoord ) {
     }
   }
 
-  fragColor.xyz = (final_col);
+  float4 text = texture2D(u_backbuffer, gl_FragCoord.st/u_resolution);
+  if ( iMouse.z > 5.0f ) {
+    fragColor = float4(final_col, 0.0f);
+  } else {
+    float n = text.w+0.01f;
+    text.w = (text.w*100.0f)/(n*100.0f);
+    fragColor = float4(mix(final_col, text.xyz, text.w), n);
+  }
 }
